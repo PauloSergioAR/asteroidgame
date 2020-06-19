@@ -23,7 +23,7 @@ const ASTEROID_VERTICES = 10
 const ASTEROID_JAG = .4
 
 //colision detection
-const SHOW_BOUNDING = true
+const SHOW_BOUNDING = false
 
 //Text constants
 const TEXT_FADE_TIME = 2.5
@@ -38,8 +38,8 @@ var level, lives, asteroids, ship, text, textAlpha, score, scoreHigh
 
 var highscores = localStorage.getItem("highscores")
 
-if(highscores != null){
-  highscores = Array.from(JSON.parse(localStorage.getItem("highscores"))).map((item) => parseInt(item)).sort().reverse()
+if (highscores != null) {
+  highscores = Array.from(JSON.parse(localStorage.getItem("highscores"))).map((item) => parseInt(item)).sort((a, b) => a-b).reverse()
 } else {
   highscores = []
 }
@@ -61,16 +61,16 @@ function createAsteroidBelt() {
   }
 }
 
-function destroyAsteroid(i){
+function destroyAsteroid(i) {
   var x = asteroids[i].x
   var y = asteroids[i].y
   var r = asteroids[i].radius
 
-  if(r == Math.ceil(ASTEROID_SIZE / 2)){
+  if (r == Math.ceil(ASTEROID_SIZE / 2)) {
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 4)))
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 4)))
     score += LGE_ASTEROID
-  } else if (r == Math.ceil(ASTEROID_SIZE / 4)){
+  } else if (r == Math.ceil(ASTEROID_SIZE / 4)) {
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 8)))
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 8)))
     score += MED_ASTEROID
@@ -78,14 +78,14 @@ function destroyAsteroid(i){
     score += SML_ASTEROID
   }
 
-  if(score > scoreHigh){
+  if (score > scoreHigh) {
     scoreHigh = score
   }
 
   asteroids.splice(i, 1)
 
-  if(asteroids.length == 0){
-    level ++
+  if (asteroids.length == 0) {
+    level++
     newLevel()
   }
 }
@@ -119,7 +119,7 @@ function killShip() {
   ship.explodeTime = Math.ceil(SHIP_EXPLODE_DUR * 60)
 }
 
-function newShip(){
+function newShip() {
   return {
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -131,7 +131,7 @@ function newShip(){
     dead: false,
     lasers: [],
     blinkNumber: Math.ceil(SHIP_INV / SHIP_BLINK),
-    blinkTime:  Math.ceil(SHIP_BLINK * 60),
+    blinkTime: Math.ceil(SHIP_BLINK * 60),
     throttling: false,
     throttle: {
       x: 0,
@@ -140,8 +140,8 @@ function newShip(){
   }
 }
 
-function shootLaser(){
-  if(ship.canShoot && ship.lasers.length < LASER_MAX){
+function shootLaser() {
+  if (ship.canShoot && ship.lasers.length < LASER_MAX) {
     ship.lasers.push({
       x: ship.x + (4 / 3) * ship.radius * Math.cos(ship.angle),
       y: ship.y - (4 / 3) * ship.radius * Math.sin(ship.angle),
@@ -155,7 +155,7 @@ function shootLaser(){
   ship.canShoot = false
 }
 
-function drawShip(x, y, a, colour="white"){
+function drawShip(x, y, a, colour = "white") {
   ctx.strokeStyle = colour
   ctx.lineWidth = SHIP_SIZE / 20
   ctx.beginPath()
@@ -187,10 +187,13 @@ function drawShip(x, y, a, colour="white"){
 
 }
 
-function gameOver(){
+function gameOver() {
   highscores.push(score)
-  highscores.sort()
+  console.log(highscores)
+  highscores.sort((a, b) => a-b)
+  console.log(highscores)
   highscores.reverse()
+  console.log(highscores)
   highscores = highscores.slice(0, 5)
   localStorage.setItem("highscores", JSON.stringify(highscores))
 
@@ -199,7 +202,7 @@ function gameOver(){
   textAlpha = 1.0
 }
 
-function newGame(){
+function newGame() {
   scoreHigh = highscores[0] ? highscores[0] : 0
   score = 0
   lives = GAME_LIVES
@@ -208,7 +211,7 @@ function newGame(){
   newLevel()
 }
 
-function newLevel(){
+function newLevel() {
   text = "Level " + (level + 1)
   textAlpha = 1.0
   createAsteroidBelt();
@@ -217,7 +220,7 @@ function newLevel(){
 //event handlers
 
 document.addEventListener("keydown", (e) => {
-  if(ship.dead)
+  if (ship.dead)
     return
 
   switch (e.keyCode) {
@@ -237,7 +240,7 @@ document.addEventListener("keydown", (e) => {
 })
 
 document.addEventListener("keyup", (e) => {
-  if(ship.dead)
+  if (ship.dead)
     return
 
   switch (e.keyCode) {
@@ -271,7 +274,7 @@ function draw() {
 
     if (!exploding && blinkOn) {
       //draw thruster
-      
+
       ctx.fillStyle = "#9dc8dd"
       ctx.strokeStyle = "#006685"
       ctx.lineWidth = SHIP_SIZE / 10
@@ -304,19 +307,19 @@ function draw() {
   //draw ship
   if (!exploding) {
 
-    if(blinkOn && !ship.dead){
+    if (blinkOn && !ship.dead) {
       drawShip(ship.x, ship.y, ship.angle)
     }
 
-    if(ship.blinkNumber > 0){
+    if (ship.blinkNumber > 0) {
       ship.blinkTime--
 
-      if(ship.blinkTime == 0){
+      if (ship.blinkTime == 0) {
         ship.blinkTime = Math.ceil(SHIP_BLINK * 60)
         ship.blinkNumber--
       }
     }
-  
+
   } else {
     //explode
     ctx.fillStyle = "red"
@@ -388,14 +391,14 @@ function draw() {
 
 
   //draw lasers
-  for(var i = 0; i < ship.lasers.length; i++){
-    if(ship.lasers[i].explodeTime == 0){
+  for (var i = 0; i < ship.lasers.length; i++) {
+    if (ship.lasers[i].explodeTime == 0) {
       ctx.fillStyle = "salmon"
       ctx.beginPath()
-      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, SHIP_SIZE/15, 0, Math.PI * 2, false)
-      ctx.fill(); 
+      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, SHIP_SIZE / 15, 0, Math.PI * 2, false)
+      ctx.fill();
     }
-    else{
+    else {
       ctx.fillStyle = "orange"
       ctx.beginPath()
       ctx.arc(ship.lasers[i].x, ship.lasers[i].y, ship.radius * .75, 0, Math.PI * 2, false)
@@ -409,27 +412,27 @@ function draw() {
       ctx.fillStyle = "pink"
       ctx.beginPath()
       ctx.arc(ship.lasers[i].x, ship.lasers[i].y, ship.radius * .25, 0, Math.PI * 2, false)
-      ctx.fill(); 
+      ctx.fill();
     }
-    
+
   }
 
   //detect laser hit
   var ax, ay, ar, lx, ly
 
-  for(var i = asteroids.length - 1; i >= 0; i--){
+  for (var i = asteroids.length - 1; i >= 0; i--) {
     ax = asteroids[i].x
     ay = asteroids[i].y
     ar = asteroids[i].radius
 
-    for(var j = ship.lasers.length - 1; j >= 0; j--){
+    for (var j = ship.lasers.length - 1; j >= 0; j--) {
       lx = ship.lasers[j].x
       ly = ship.lasers[j].y
 
-      if(ship.lasers[j].explodeTime == 0 && distBetweenPoints(ax, ay, lx, ly) < ar){
+      if (ship.lasers[j].explodeTime == 0 && distBetweenPoints(ax, ay, lx, ly) < ar) {
         ship.lasers[j].explodeTime = Math.ceil(LASER_EXPLODE_DUR * 60)
         destroyAsteroid(i)
-        break 
+        break
       }
     }
   }
@@ -456,45 +459,45 @@ function draw() {
     }
 
     //move lasers
-    for(var i = ship.lasers.length - 1; i >= 0 ; i--){
-      if(ship.lasers[i].dist > LASER_DIST * canvas.width){
-        ship.lasers.splice(i,  1)
+    for (var i = ship.lasers.length - 1; i >= 0; i--) {
+      if (ship.lasers[i].dist > LASER_DIST * canvas.width) {
+        ship.lasers.splice(i, 1)
         continue
       }
 
-      if(ship.lasers[i].explodeTime > 0){
+      if (ship.lasers[i].explodeTime > 0) {
         ship.lasers[i].explodeTime--
 
-        if(ship.lasers[i].explodeTime == 0){
+        if (ship.lasers[i].explodeTime == 0) {
           ship.lasers.splice(i, 1)
           continue
         }
       }
 
-      else{
+      else {
         ship.lasers[i].x += ship.lasers[i].xv
         ship.lasers[i].y += ship.lasers[i].yv
-  
+
         ship.lasers[i].dist += Math.sqrt(Math.pow(ship.lasers[i].xv, 2) + Math.pow(ship.lasers[i].yv, 2))
-  
+
 
         //edge
-        if(ship.lasers[i].x < 0){
+        if (ship.lasers[i].x < 0) {
           ship.lasers[i].x = canvas.width
-        } else if (ship.lasers[i].x > canvas.width){
+        } else if (ship.lasers[i].x > canvas.width) {
           ship.lasers[i].x = 0
         }
-  
-        if(ship.lasers[i].y < 0){
+
+        if (ship.lasers[i].y < 0) {
           ship.lasers[i].y = canvas.height
-        } else if (ship.lasers[i].x > canvas.height){
+        } else if (ship.lasers[i].y > canvas.height) {
           ship.lasers[i].y = 0
         }
       }
     }
 
     //handle colisions
-    if(ship.blinkNumber == 0 && !ship.dead){
+    if (ship.blinkNumber == 0 && !ship.dead) {
       for (var i = 0; i < asteroids.length; i++) {
         if (distBetweenPoints(ship.x, ship.y, asteroids[i].x, asteroids[i].y) < ship.radius + asteroids[i].radius) {
           killShip()
@@ -503,13 +506,13 @@ function draw() {
         }
       }
     }
-    
+
   } else {
     ship.explodeTime--
 
-    if(ship.explodeTime == 0){
+    if (ship.explodeTime == 0) {
       lives--
-      if(lives == 0){
+      if (lives == 0) {
         gameOver()
       } else {
         ship = newShip()
@@ -522,36 +525,36 @@ function draw() {
     asteroids[i].x += asteroids[i].xv
     asteroids[i].y += asteroids[i].yv
 
-    //off the screen
-
+    //handle edge
     if (asteroids[i].x < 0 - asteroids[i].radius) {
-      asteroids[i].x = canvas.width + asteroids[i].radius
+      asteroids[i].x = canvas.width + asteroids[i].radius;
     } else if (asteroids[i].x > canvas.width + asteroids[i].radius) {
-      asteroids[i].x = 0 + asteroids[i].radius
+      asteroids[i].x = 0 - asteroids[i].radius
     }
-
     if (asteroids[i].y < 0 - asteroids[i].radius) {
-      asteroids[i].y = canvas.height + asteroids[i].radius
-    } else if (asteroids[i].x > canvas.height + asteroids[i].radius) {
-      asteroids[i].y = 0 + asteroids[i].radius
+      asteroids[i].y = canvas.height + asteroids[i].radius;
+    } else if (asteroids[i].y > canvas.height + asteroids[i].radius) {
+      asteroids[i].y = 0 - asteroids[i].radius
     }
   }
 
+  
+
   //Draw Text
-  if(textAlpha >= 0){
+  if (textAlpha >= 0) {
     ctx.textAlign = "center"
     ctx.textBaseline = "middle"
     ctx.fillStyle = "rgba(255,255,255," + textAlpha + ")"
     ctx.font = "small-caps " + TEXT_SIZE + "px dejavu sans mono"
-    ctx.fillText(text, canvas.width/2, canvas.height * .75)
+    ctx.fillText(text, canvas.width / 2, canvas.height * .75)
     textAlpha -= (1.0 / TEXT_FADE_TIME / 60)
-  } else if (ship.dead){
+  } else if (ship.dead) {
     newGame()
   }
 
   //Draw Lives
   var lifeColour
-  for(var i = 0; i < lives; i++){
+  for (var i = 0; i < lives; i++) {
     lifeColour = exploding && i == lives - 1 ? "red" : "green"
     drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, lifeColour)
   }
