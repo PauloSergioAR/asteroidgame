@@ -29,7 +29,20 @@ const SHOW_BOUNDING = true
 const TEXT_FADE_TIME = 2.5
 const TEXT_SIZE = 40
 
-var level, lives, asteroids, ship, text, textAlpha
+// score constants
+const LGE_ASTEROID = 20
+const MED_ASTEROID = 50
+const SML_ASTEROID = 100
+
+var level, lives, asteroids, ship, text, textAlpha, score, scoreHigh
+
+var highscores = localStorage.getItem("highscores")
+
+if(highscores != null){
+  highscores = Array.from(JSON.parse(localStorage.getItem("highscores"))).map((item) => parseInt(item)).sort().reverse()
+} else {
+  highscores = []
+}
 
 newGame()
 
@@ -56,9 +69,17 @@ function destroyAsteroid(i){
   if(r == Math.ceil(ASTEROID_SIZE / 2)){
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 4)))
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 4)))
+    score += LGE_ASTEROID
   } else if (r == Math.ceil(ASTEROID_SIZE / 4)){
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 8)))
     asteroids.push(newAsteroid(x, y, Math.ceil(ASTEROID_SIZE / 8)))
+    score += MED_ASTEROID
+  } else {
+    score += SML_ASTEROID
+  }
+
+  if(score > scoreHigh){
+    scoreHigh = score
   }
 
   asteroids.splice(i, 1)
@@ -167,12 +188,20 @@ function drawShip(x, y, a, colour="white"){
 }
 
 function gameOver(){
+  highscores.push(score)
+  highscores.sort()
+  highscores.reverse()
+  highscores = highscores.slice(0, 5)
+  localStorage.setItem("highscores", JSON.stringify(highscores))
+
   ship.dead = true
   text = "Game Over"
   textAlpha = 1.0
 }
 
 function newGame(){
+  scoreHigh = highscores[0] ? highscores[0] : 0
+  score = 0
   lives = GAME_LIVES
   level = 0;
   ship = newShip()
@@ -448,6 +477,8 @@ function draw() {
   
         ship.lasers[i].dist += Math.sqrt(Math.pow(ship.lasers[i].xv, 2) + Math.pow(ship.lasers[i].yv, 2))
   
+
+        //edge
         if(ship.lasers[i].x < 0){
           ship.lasers[i].x = canvas.width
         } else if (ship.lasers[i].x > canvas.width){
@@ -524,6 +555,19 @@ function draw() {
     lifeColour = exploding && i == lives - 1 ? "red" : "green"
     drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, lifeColour)
   }
+
+  //draw score
+  ctx.textAlign = "right"
+  ctx.textBaseline = "middle"
+  ctx.fillStyle = "white"
+  ctx.font = TEXT_SIZE + "px dejavu sans mono"
+  ctx.fillText(score, canvas.width - SHIP_SIZE / 2, SHIP_SIZE)
+
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  ctx.fillStyle = "yellow"
+  ctx.font = (TEXT_SIZE * .75) + "px dejavu sans mono"
+  ctx.fillText("Best: " + scoreHigh, canvas.width / 2, SHIP_SIZE)
 
   window.requestAnimationFrame(draw)
 }
