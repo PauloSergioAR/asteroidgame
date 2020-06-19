@@ -1,3 +1,6 @@
+import { retrieveData, storeScore } from './src/storageutils.js'
+import { drawShip, drawThruster, drawAsteroid, drawLaser } from './src/drawer.js'
+
 var canvas = document.getElementById('canvas')
 var ctx = canvas.getContext('2d')
 
@@ -36,15 +39,14 @@ const SML_ASTEROID = 100
 
 var level, lives, asteroids, ship, text, textAlpha, score, scoreHigh
 
-var highscores = localStorage.getItem("highscores")
+var highscores
 
-if (highscores != null) {
-  highscores = Array.from(JSON.parse(localStorage.getItem("highscores"))).map((item) => parseInt(item)).sort((a, b) => a-b).reverse()
-} else {
-  highscores = []
-}
 
 newGame()
+
+function updateScore(){
+  highscores = retrieveData()
+}
 
 //Asteroid methods
 function createAsteroidBelt() {
@@ -155,47 +157,8 @@ function shootLaser() {
   ship.canShoot = false
 }
 
-function drawShip(x, y, a, colour = "white") {
-  ctx.strokeStyle = colour
-  ctx.lineWidth = SHIP_SIZE / 20
-  ctx.beginPath()
-
-  ctx.moveTo( //nose
-    x + (4 / 3) * ship.radius * Math.cos(a),
-    y - (4 / 3) * ship.radius * Math.sin(a)
-  );
-
-  ctx.lineTo( // rear left
-    x - ship.radius * ((2 / 3) * Math.cos(a) + Math.sin(a)),
-    y + ship.radius * ((2 / 3) * Math.sin(a) - Math.cos(a))
-  );
-
-  ctx.lineTo( // rear right
-    x - ship.radius * ((2 / 3) * Math.cos(a) - Math.sin(a)),
-    y + ship.radius * ((2 / 3) * Math.sin(a) + Math.cos(a))
-  );
-
-  ctx.closePath()
-  ctx.stroke()
-
-  if (SHOW_BOUNDING) {
-    ctx.strokeStyle = "lime"
-    ctx.beginPath()
-    ctx.arc(ship.x, ship.y, ship.radius * 1.5, 0, Math.PI * 2, false)
-    ctx.stroke()
-  }
-
-}
-
 function gameOver() {
-  highscores.push(score)
-  console.log(highscores)
-  highscores.sort((a, b) => a-b)
-  console.log(highscores)
-  highscores.reverse()
-  console.log(highscores)
-  highscores = highscores.slice(0, 5)
-  localStorage.setItem("highscores", JSON.stringify(highscores))
+  storeScore(score)
 
   ship.dead = true
   text = "Game Over"
@@ -203,6 +166,7 @@ function gameOver() {
 }
 
 function newGame() {
+  updateScore()
   scoreHigh = highscores[0] ? highscores[0] : 0
   score = 0
   lives = GAME_LIVES
@@ -218,7 +182,6 @@ function newLevel() {
 }
 
 //event handlers
-
 document.addEventListener("keydown", (e) => {
   if (ship.dead)
     return
@@ -274,30 +237,8 @@ function draw() {
 
     if (!exploding && blinkOn) {
       //draw thruster
-
-      ctx.fillStyle = "#9dc8dd"
-      ctx.strokeStyle = "#006685"
-      ctx.lineWidth = SHIP_SIZE / 10
-      ctx.beginPath()
-
-      ctx.moveTo(// rear left
-        ship.x - ship.radius * ((2 / 3) * Math.cos(ship.angle) + .5 * Math.sin(ship.angle)),
-        ship.y + ship.radius * ((2 / 3) * Math.sin(ship.angle) - .5 * Math.cos(ship.angle))
-      );
-
-      ctx.lineTo( // rear center behind
-        ship.x - ship.radius * ((8 / 3) * Math.cos(ship.angle)),
-        ship.y + ship.radius * ((8 / 3) * Math.sin(ship.angle))
-      );
-
-      ctx.lineTo( // rear right
-        ship.x - ship.radius * ((2 / 3) * Math.cos(ship.angle) - .5 * Math.sin(ship.angle)),
-        ship.y + ship.radius * ((2 / 3) * Math.sin(ship.angle) + .5 * Math.cos(ship.angle))
-      );
-      ctx.fill();
-      ctx.closePath()
-      ctx.stroke()
-    }
+      drawThruster(ship.x, ship.y, ship.angle, ship.radius, ctx)
+     }
 
   } else {
     ship.throttle.x -= FRICTION * ship.throttle.x / 60
@@ -308,7 +249,7 @@ function draw() {
   if (!exploding) {
 
     if (blinkOn && !ship.dead) {
-      drawShip(ship.x, ship.y, ship.angle)
+      drawShip(ship.x, ship.y, ship.angle, ship.radius, ctx)
     }
 
     if (ship.blinkNumber > 0) {
@@ -345,76 +286,23 @@ function draw() {
   }
 
   //draw asteroids
-  var a, r, x, y, vert, offset;
   for (var i = 0; i < asteroids.length; i++) {
-    ctx.strokeStyle = "slategrey";
-    ctx.lineWidth = SHIP_SIZE / 20;
 
-    // get the asteroid properties
-    a = asteroids[i].angle
-    r = asteroids[i].radius
-    x = asteroids[i].x
-    y = asteroids[i].y
-    offsets = asteroids[i].offsets
-
-    vert = asteroids[i].vertices
-
-    // draw the path
-    ctx.beginPath()
-    ctx.moveTo(
-      x + r * offsets[0] * Math.cos(a),
-      y + r * offsets[0] * Math.sin(a)
-    )
-
-    // draw the polygon
-    for (var j = 1; j < vert; j++) {
-      ctx.lineTo(
-        x + r * offsets[j] * Math.cos(a + j * Math.PI * 2 / vert),
-        y + r * offsets[j] * Math.sin(a + j * Math.PI * 2 / vert)
-      );
-    }
-    ctx.closePath()
-    ctx.stroke()
-
-    if (SHOW_BOUNDING) {
-      ctx.strokeStyle = "lime"
-
-      ctx.beginPath()
-      ctx.arc(x, y, r, 0, Math.PI * 2, false)
-      ctx.stroke()
-    }
+    drawAsteroid(
+      asteroids[i].x,
+      asteroids[i].y,
+      asteroids[i].radius,
+      asteroids[i].angle,
+      asteroids[i].vertices,
+      asteroids[i].offsets,
+      ctx)
   }
-
-  //center of ship
-  ctx.fillStyle = "white"
-  ctx.fillRect(ship.x - 1, ship.y - 1, 2, 2)
-
 
   //draw lasers
   for (var i = 0; i < ship.lasers.length; i++) {
-    if (ship.lasers[i].explodeTime == 0) {
-      ctx.fillStyle = "salmon"
-      ctx.beginPath()
-      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, SHIP_SIZE / 15, 0, Math.PI * 2, false)
-      ctx.fill();
-    }
-    else {
-      ctx.fillStyle = "orange"
-      ctx.beginPath()
-      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, ship.radius * .75, 0, Math.PI * 2, false)
-      ctx.fill();
-
-      ctx.fillStyle = "salmon"
-      ctx.beginPath()
-      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, ship.radius * .50, 0, Math.PI * 2, false)
-      ctx.fill();
-
-      ctx.fillStyle = "pink"
-      ctx.beginPath()
-      ctx.arc(ship.lasers[i].x, ship.lasers[i].y, ship.radius * .25, 0, Math.PI * 2, false)
-      ctx.fill();
-    }
-
+    var laser = ship.lasers[i]
+    
+    drawLaser(laser.x, laser.y, ship.radius, !(ship.lasers[i].explodeTime == 0), ctx)
   }
 
   //detect laser hit
@@ -480,7 +368,6 @@ function draw() {
 
         ship.lasers[i].dist += Math.sqrt(Math.pow(ship.lasers[i].xv, 2) + Math.pow(ship.lasers[i].yv, 2))
 
-
         //edge
         if (ship.lasers[i].x < 0) {
           ship.lasers[i].x = canvas.width
@@ -538,8 +425,6 @@ function draw() {
     }
   }
 
-  
-
   //Draw Text
   if (textAlpha >= 0) {
     ctx.textAlign = "center"
@@ -556,7 +441,7 @@ function draw() {
   var lifeColour
   for (var i = 0; i < lives; i++) {
     lifeColour = exploding && i == lives - 1 ? "red" : "green"
-    drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, lifeColour)
+    drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, ship.radius, ctx, lifeColour)
   }
 
   //draw score
