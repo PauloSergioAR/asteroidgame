@@ -37,14 +37,24 @@ const LGE_ASTEROID = 20
 const MED_ASTEROID = 50
 const SML_ASTEROID = 100
 
-var level, lives, asteroids, ship, text, textAlpha, score, scoreHigh
+var level, lives, asteroids, ship, text, textAlpha, score, scoreHigh, started
+
+started = false
 
 var highscores
+
+let overlay = document.getElementById('overlay')
+let startButton = document.getElementById("start_btn")
+
+startButton.addEventListener('click', () => {
+  started = true
+  overlay.style.display = 'none'
+})
 
 
 newGame()
 
-function updateScore(){
+function updateScore() {
   highscores = retrieveData()
 }
 
@@ -183,7 +193,7 @@ function newLevel() {
 
 //event handlers
 document.addEventListener("keydown", (e) => {
-  if (ship.dead)
+  if (ship.dead || !started)
     return
 
   switch (e.keyCode) {
@@ -199,6 +209,12 @@ document.addEventListener("keydown", (e) => {
     case 32: //shoot
       shootLaser()
       break
+    case 27: //exit
+      storeScore(score)
+      newGame()
+      started = false
+      overlay.style.display = 'flex'
+      break;
   }
 })
 
@@ -238,7 +254,7 @@ function draw() {
     if (!exploding && blinkOn) {
       //draw thruster
       drawThruster(ship.x, ship.y, ship.angle, ship.radius, ctx)
-     }
+    }
 
   } else {
     ship.throttle.x -= FRICTION * ship.throttle.x / 60
@@ -301,7 +317,7 @@ function draw() {
   //draw lasers
   for (var i = 0; i < ship.lasers.length; i++) {
     var laser = ship.lasers[i]
-    
+
     drawLaser(laser.x, laser.y, ship.radius, !(ship.lasers[i].explodeTime == 0), ctx)
   }
 
@@ -384,7 +400,7 @@ function draw() {
     }
 
     //handle colisions
-    if (ship.blinkNumber == 0 && !ship.dead) {
+    if (ship.blinkNumber == 0 && !ship.dead && started) {
       for (var i = 0; i < asteroids.length; i++) {
         if (distBetweenPoints(ship.x, ship.y, asteroids[i].x, asteroids[i].y) < ship.radius + asteroids[i].radius) {
           killShip()
@@ -438,24 +454,27 @@ function draw() {
   }
 
   //Draw Lives
-  var lifeColour
-  for (var i = 0; i < lives; i++) {
-    lifeColour = exploding && i == lives - 1 ? "red" : "green"
-    drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, ship.radius, ctx, lifeColour)
+  if (started) {
+    var lifeColour
+    for (var i = 0; i < lives; i++) {
+      lifeColour = exploding && i == lives - 1 ? "red" : "green"
+      drawShip(SHIP_SIZE + i * SHIP_SIZE * 1.2, SHIP_SIZE, .5 * Math.PI, ship.radius, ctx, lifeColour)
+    }
+
+
+    //draw score
+    ctx.textAlign = "right"
+    ctx.textBaseline = "middle"
+    ctx.fillStyle = "white"
+    ctx.font = TEXT_SIZE + "px dejavu sans mono"
+    ctx.fillText(score, canvas.width - SHIP_SIZE / 2, SHIP_SIZE)
+
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    ctx.fillStyle = "yellow"
+    ctx.font = (TEXT_SIZE * .75) + "px dejavu sans mono"
+    ctx.fillText("Best: " + scoreHigh, canvas.width / 2, SHIP_SIZE)
   }
-
-  //draw score
-  ctx.textAlign = "right"
-  ctx.textBaseline = "middle"
-  ctx.fillStyle = "white"
-  ctx.font = TEXT_SIZE + "px dejavu sans mono"
-  ctx.fillText(score, canvas.width - SHIP_SIZE / 2, SHIP_SIZE)
-
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-  ctx.fillStyle = "yellow"
-  ctx.font = (TEXT_SIZE * .75) + "px dejavu sans mono"
-  ctx.fillText("Best: " + scoreHigh, canvas.width / 2, SHIP_SIZE)
 
   window.requestAnimationFrame(draw)
 }

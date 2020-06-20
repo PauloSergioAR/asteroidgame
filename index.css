@@ -68,3 +68,20 @@ h1 {
   list-style-type: none;
   font-size: 40px;
 }
+
+#controles_title{
+  text-align: center;
+  color: white;
+  font-size: 25px;
+}
+
+.controle {
+  color: white;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+#tutorial {
+  display: none;
+}
