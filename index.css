@@ -75,13 +75,13 @@ h1 {
   font-size: 40px;
 }
 
-#controles_title{
+.tutorial_title{
   text-align: center;
   color: white;
   font-size: 25px;
 }
 
-.controle {
+.tutorial_text {
   color: white;
   margin-top: 10px;
   margin-bottom: 10px;
